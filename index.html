@@ -96,7 +96,7 @@ let tab='vente',sub='menu',cart={},day=today(),open=false,np='';
 const tracked=m=>m.stock!=null;
 const img=(m,c)=>m.photo?`<img class="${c}" src="${m.photo}" alt="">`:(c==='th'?`<div class="th"></div>`:`<div class="ph">${esc(m.name.charAt(0).toUpperCase())}</div>`);
 function nav(){
-$('#nav').innerHTML=[['vente','Vente'],['stock','Stock'],['admin','Admin']].map(([k,l])=>`<button class="${k===tab?'on':''}" onclick="tab='${k}';draw()">${l}${k==='admin'&&!open?' 🔒':''}</button>`).join('')}
+$('#nav').innerHTML=[['vente','Vente'],['stock','Stock'],['admin','Admin']].map(([k,l])=>`<button class="${k===tab?'on':''}" onclick="tab='${k}';if(k==='vente')open=false;draw()">${l}${k!=='vente'&&!open?' 🔒':''}</button>`).join('')}
 function vente(){
 const t=S.menu.reduce((a,m)=>a+(cart[m.id]||0)*m.price,0),n=Object.values(cart).reduce((a,b)=>a+b,0);
 $('#v').innerHTML=(S.menu.length?`<div class="grid">${S.menu.map(m=>{const out=tracked(m)&&m.stock<=0;return`<button class="item ${out?'out':''}" ${out?'disabled':''} onclick="add('${m.id}',1)">${cart[m.id]?`<i>${cart[m.id]}</i>`:''}${img(m,'')}<b>${esc(m.name)}</b><span>${F(m.price)}</span>${tracked(m)?`<em class="${m.stock<=3?'low':''}">${out?'Épuisé':'Reste '+(m.stock-(cart[m.id]||0))}</em>`:''}</button>`}).join('')}</div>`:'<p class="empty">Ajoute des produits dans Admin › Menu.</p>')+
@@ -108,6 +108,7 @@ function pay(){const items=S.menu.filter(m=>cart[m.id]).map(m=>({n:m.name,q:cart
 S.menu.forEach(m=>{if(cart[m.id]&&tracked(m))m.stock=Math.max(0,m.stock-cart[m.id])});
 S.sales.push({id:uid(),d:today(),h:new Date().toTimeString().slice(0,5),items,pm,t:items.reduce((a,i)=>a+i.q*i.p,0)});cart={};save('menu','day');draw()}
 function stock(){
+if(!open){admin();return}
 $('#v').innerHTML=`<p class="note">Mise en place : entre la quantité préparée. Le reste baisse à chaque vente.</p><div class="card">${S.menu.length?S.menu.map(m=>`<div class="row">${img(m,'th')}<div class="grow"><b>${esc(m.name)}</b><div class="${tracked(m)&&m.stock<=3?'minus':'note'}">${tracked(m)?'Reste : '+m.stock:'Stock non suivi'}</div></div><input class="q" id="q${m.id}" type="number" inputmode="numeric" placeholder="Qté"><button class="ghost" onclick="mep('${m.id}')">Ajouter</button></div>`).join(''):'<p class="empty">Aucun produit.</p>'}</div>
 <button class="ghost" onclick="zero()">Remettre tous les restes à zéro</button>`}
 function mep(id){const q=parseInt($('#q'+id).value);if(!(q>0))return;const m=S.menu.find(x=>x.id===id);m.stock=(m.stock||0)+q;S.mep.push({d:today(),id,q});save('menu','day');draw()}
